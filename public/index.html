@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kommunikationstool – Gespräche üben</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <h1>Kommunikationstool</h1>
+    <p class="subtitle">Übe wichtige Gespräche in einer sicheren Umgebung</p>
+  </header>
+
+  <main class="container">
+    <h2 class="section-title">Wähle ein Szenario</h2>
+    <div class="scenario-grid">
+      <button class="scenario-card" data-scenario="bewerbung">
+        <span class="scenario-icon">💼</span>
+        <span class="scenario-name">Bewerbungsgespräch</span>
+        <span class="scenario-desc">Bereite dich auf typische Fragen im Vorstellungsgespräch vor.</span>
+      </button>
+
+      <button class="scenario-card" data-scenario="sales">
+        <span class="scenario-icon">📈</span>
+        <span class="scenario-name">Sales-Pitch</span>
+        <span class="scenario-desc">Übe, ein Produkt oder eine Idee überzeugend vorzustellen.</span>
+      </button>
+
+      <button class="scenario-card" data-scenario="gehalt">
+        <span class="scenario-icon">💰</span>
+        <span class="scenario-name">Gehaltsverhandlung</span>
+        <span class="scenario-desc">Trainiere, selbstbewusst über dein Gehalt zu verhandeln.</span>
+      </button>
+    </div>
+
+    <section id="detail" class="detail-panel hidden">
+      <button id="backButton" class="back-button">← Zurück zur Auswahl</button>
+      <h2 id="detailTitle"></h2>
+      <p id="detailText"></p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Kommunikationstool &middot; Einfach üben, sicher wachsen</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

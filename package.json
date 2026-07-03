@@ -1,0 +1,12 @@
+{
+  "name": "kommunikationstool2",
+  "version": "1.0.0",
+  "description": "Ein einfaches Übungstool für Gesprächsszenarien",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
