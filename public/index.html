@@ -53,10 +53,21 @@
         <button type="submit" id="sendButton" class="send-button">Senden</button>
       </form>
 
-      <label class="speak-toggle">
-        <input type="checkbox" id="speakToggle" checked>
-        Antworten der KI vorlesen
-      </label>
+      <div class="detail-footer-row">
+        <label class="speak-toggle">
+          <input type="checkbox" id="speakToggle" checked>
+          Antworten der KI vorlesen
+        </label>
+
+        <button type="button" id="analyzeButton" class="analyze-button" disabled>
+          Gespräch auswerten
+        </button>
+      </div>
+
+      <section id="analysisPanel" class="analysis-panel hidden">
+        <h3>Auswertung deines Gesprächs</h3>
+        <div id="analysisContent"></div>
+      </section>
     </section>
   </main>
 

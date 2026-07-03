@@ -14,6 +14,33 @@ Wichtige Regeln:
 - Keine Aufzählungen, keine langen Monologe – sprich, wie ein Mensch im Gespräch sprechen würde.`;
 }
 
+// Die fünf festen Bewertungsbereiche für die Gesprächsauswertung.
+const ANALYSIS_AREAS = [
+  'Klarheit & Struktur',
+  'Selbstbewusstsein & Wirkung',
+  'Sprachliche Präzision',
+  'Nutzen- & Ergebnisorientierung',
+  'Gesprächsführung'
+];
+
+function buildAnalysisSystemPrompt(scenarioTitle) {
+  return `Du bist ein erfahrener Kommunikationscoach. Du erhältst den Verlauf eines Übungs-Rollenspiels zum Thema „${scenarioTitle}“ zwischen einer KI-Gesprächsrolle und einer übenden Person.
+
+Bewerte ausschließlich die Kommunikation der übenden Person (die Beiträge mit der Rolle „user“), nicht die der KI-Gesprächsrolle.
+
+Bewerte genau in diesen fünf Bereichen: ${ANALYSIS_AREAS.join(', ')}.
+
+Für jeden Bereich: nenne 1-3 konkrete Stärken und 1-3 konkrete Verbesserungsvorschläge, die sich auf tatsächliche Aussagen der übenden Person im Gespräch beziehen.
+
+Gib außerdem 2-3 konkrete Umformulierungsbeispiele: jeweils eine originale Formulierung der übenden Person aus dem Gespräch und eine verbesserte Version davon.
+
+Gib genau drei konkrete, umsetzbare nächste Übungsschritte.
+
+Vergib einen Gesamtscore von 0 bis 100, der die Gesamtqualität der Kommunikation der übenden Person in diesem Gespräch widerspiegelt.
+
+Antworte ausschließlich über das bereitgestellte Werkzeug mit strukturierten Daten, kein Fließtext.`;
+}
+
 module.exports = {
   bewerbung: {
     title: 'Bewerbungsgespräch',
@@ -34,5 +61,8 @@ module.exports = {
     system: buildSystemPrompt(
       'die/der sachliche, leicht zurückhaltende Vorgesetzte in einer Gehaltsverhandlung. Der/die Nutzer:in ist der/die Angestellte und möchte mehr Gehalt.'
     )
-  }
+  },
+
+  ANALYSIS_AREAS,
+  buildAnalysisSystemPrompt
 };
