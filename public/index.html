@@ -34,6 +34,41 @@
       </button>
     </div>
 
+    <section id="jobSetup" class="detail-panel hidden">
+      <button id="jobSetupBackButton" class="back-button">← Zurück zur Auswahl</button>
+      <h2>Bewerbungsgespräch vorbereiten</h2>
+      <p class="setup-intro">Du bewirbst dich bei <strong>Alpha Blueprint</strong>. Wähle die Stelle, für die du das Gespräch üben möchtest.</p>
+
+      <form id="jobSetupForm" class="job-setup-form">
+        <label class="field-label" for="jobTitleSelect">Position</label>
+        <select id="jobTitleSelect" class="field-select">
+          <option value="Sales Manager (m/w/d)">Sales Manager (m/w/d)</option>
+          <option value="Softwareentwickler:in">Softwareentwickler:in</option>
+          <option value="Marketing-Referent:in">Marketing-Referent:in</option>
+          <option value="Kundenservice-Mitarbeiter:in">Kundenservice-Mitarbeiter:in</option>
+          <option value="Projektmanager:in">Projektmanager:in</option>
+          <option value="__custom__">Andere Position …</option>
+        </select>
+
+        <input
+          type="text"
+          id="jobTitleCustom"
+          class="field-input hidden"
+          placeholder="Bezeichnung der Position eingeben"
+        >
+
+        <label class="field-label" for="jobInfo">Infos zur Stelle (optional)</label>
+        <textarea
+          id="jobInfo"
+          class="field-textarea"
+          rows="6"
+          placeholder="Füge hier z. B. Stellenbeschreibung, Anforderungen oder Besonderheiten der Position ein…"
+        ></textarea>
+
+        <button type="submit" class="start-button">Gespräch starten</button>
+      </form>
+    </section>
+
     <section id="detail" class="detail-panel hidden">
       <button id="backButton" class="back-button">← Zurück zur Auswahl</button>
       <h2 id="detailTitle"></h2>

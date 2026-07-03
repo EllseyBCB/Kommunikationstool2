@@ -19,7 +19,15 @@ const analyzeButton = document.getElementById('analyzeButton');
 const analysisPanel = document.getElementById('analysisPanel');
 const analysisContent = document.getElementById('analysisContent');
 
+const jobSetup = document.getElementById('jobSetup');
+const jobSetupForm = document.getElementById('jobSetupForm');
+const jobSetupBackButton = document.getElementById('jobSetupBackButton');
+const jobTitleSelect = document.getElementById('jobTitleSelect');
+const jobTitleCustom = document.getElementById('jobTitleCustom');
+const jobInfoField = document.getElementById('jobInfo');
+
 let currentScenario = null;
+let currentDetails = {};
 let conversation = []; // { role: 'user' | 'assistant', content: string }
 let isLoading = false;
 let isAnalyzing = false;
@@ -54,7 +62,7 @@ async function sendToServer() {
   const response = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ scenario: currentScenario, messages: conversation })
+    body: JSON.stringify({ scenario: currentScenario, messages: conversation, details: currentDetails })
   });
 
   const data = await response.json();
@@ -84,8 +92,9 @@ async function requestAiReply() {
   }
 }
 
-function startScenario(key) {
+function startScenario(key, details) {
   currentScenario = key;
+  currentDetails = details || {};
   conversation = [];
   chatLog.innerHTML = '';
   setStatus('');
@@ -93,8 +102,14 @@ function startScenario(key) {
   analysisPanel.classList.add('hidden');
   analysisContent.innerHTML = '';
   analyzeButton.disabled = true;
+  analyzeButton.textContent = 'Gespräch auswerten';
 
-  detailTitle.textContent = scenarioTitles[key];
+  const title = currentDetails.jobTitle
+    ? `${scenarioTitles[key]} – ${currentDetails.jobTitle}`
+    : scenarioTitles[key];
+  detailTitle.textContent = title;
+
+  jobSetup.classList.add('hidden');
   detailPanel.classList.remove('hidden');
   scenarioGrid.classList.add('hidden');
   detailPanel.scrollIntoView({ behavior: 'smooth' });
@@ -105,8 +120,48 @@ function startScenario(key) {
 cards.forEach((card) => {
   card.addEventListener('click', () => {
     const key = card.dataset.scenario;
-    if (scenarioTitles[key]) startScenario(key);
+    if (!scenarioTitles[key]) return;
+
+    if (key === 'bewerbung') {
+      jobTitleSelect.value = jobTitleSelect.options[0].value;
+      jobTitleCustom.value = '';
+      jobTitleCustom.classList.add('hidden');
+      jobInfoField.value = '';
+
+      jobSetup.classList.remove('hidden');
+      scenarioGrid.classList.add('hidden');
+      jobSetup.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    startScenario(key);
   });
+});
+
+jobTitleSelect.addEventListener('change', () => {
+  const isCustom = jobTitleSelect.value === '__custom__';
+  jobTitleCustom.classList.toggle('hidden', !isCustom);
+  if (isCustom) jobTitleCustom.focus();
+});
+
+jobSetupBackButton.addEventListener('click', () => {
+  jobSetup.classList.add('hidden');
+  scenarioGrid.classList.remove('hidden');
+});
+
+jobSetupForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+
+  const jobTitle = jobTitleSelect.value === '__custom__'
+    ? jobTitleCustom.value.trim()
+    : jobTitleSelect.value;
+
+  if (!jobTitle) {
+    jobTitleCustom.focus();
+    return;
+  }
+
+  startScenario('bewerbung', { jobTitle, jobInfo: jobInfoField.value.trim() });
 });
 
 backButton.addEventListener('click', () => {
@@ -251,7 +306,7 @@ analyzeButton.addEventListener('click', async () => {
     const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scenario: currentScenario, messages: conversation })
+      body: JSON.stringify({ scenario: currentScenario, messages: conversation, details: currentDetails })
     });
 
     const data = await response.json();

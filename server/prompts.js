@@ -14,6 +14,24 @@ Wichtige Regeln:
 - Keine Aufzählungen, keine langen Monologe – sprich, wie ein Mensch im Gespräch sprechen würde.`;
 }
 
+const COMPANY_NAME = 'Alpha Blueprint';
+
+// Baut den System-Prompt für das Bewerbungsgespräch dynamisch anhand der gewählten
+// Stelle und optionaler Zusatzinfos auf. Die KI tritt dabei immer als Personalerin
+// der Firma Alpha Blueprint auf.
+function buildBewerbungSystemPrompt(details = {}) {
+  const jobTitle = (details.jobTitle || '').trim() || 'eine ausgeschriebene Position';
+  const jobInfo = (details.jobInfo || '').trim();
+
+  const stelleninfo = jobInfo
+    ? ` Hier sind weitere Informationen zur ausgeschriebenen Stelle, die du für das Gespräch berücksichtigen sollst:\n\n${jobInfo}`
+    : '';
+
+  const rolle = `eine erfahrene, freundliche, aber durchaus fordernde Personalerin der Firma „${COMPANY_NAME}“, die ein Bewerbungsgespräch für die Position „${jobTitle}“ führt. Der/die Nutzer:in ist die Bewerberin bzw. der Bewerber, der/die sich bei ${COMPANY_NAME} auf genau diese Stelle beworben hat.${stelleninfo}`;
+
+  return buildSystemPrompt(rolle);
+}
+
 // Die fünf festen Bewertungsbereiche für die Gesprächsauswertung.
 const ANALYSIS_AREAS = [
   'Klarheit & Struktur',
@@ -44,9 +62,7 @@ Antworte ausschließlich über das bereitgestellte Werkzeug mit strukturierten D
 module.exports = {
   bewerbung: {
     title: 'Bewerbungsgespräch',
-    system: buildSystemPrompt(
-      'eine erfahrene, freundliche, aber durchaus fordernde Personalerin in einem Bewerbungsgespräch. Der/die Nutzer:in ist die Bewerberin bzw. der Bewerber.'
-    )
+    buildSystem: buildBewerbungSystemPrompt
   },
 
   sales: {
@@ -63,6 +79,7 @@ module.exports = {
     )
   },
 
+  COMPANY_NAME,
   ANALYSIS_AREAS,
   buildAnalysisSystemPrompt
 };

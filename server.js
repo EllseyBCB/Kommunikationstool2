@@ -9,6 +9,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const MODEL = 'claude-sonnet-5';
 const MAX_HISTORY_MESSAGES = 40;
+const MAX_DETAIL_FIELD_LENGTH = 4000;
 const SCENARIO_KEYS = ['bewerbung', 'sales', 'gehalt'];
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -77,8 +78,24 @@ const ANALYSIS_TOOL = {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-function getScenarioConfig(scenario) {
-  return SCENARIO_KEYS.includes(scenario) ? prompts[scenario] : null;
+function trimField(value) {
+  return typeof value === 'string' ? value.trim().slice(0, MAX_DETAIL_FIELD_LENGTH) : '';
+}
+
+function getScenarioConfig(scenario, details) {
+  if (!SCENARIO_KEYS.includes(scenario)) return null;
+
+  const config = prompts[scenario];
+
+  if (typeof config.buildSystem === 'function') {
+    const cleanDetails = {
+      jobTitle: trimField(details && details.jobTitle),
+      jobInfo: trimField(details && details.jobInfo)
+    };
+    return { title: config.title, system: config.buildSystem(cleanDetails) };
+  }
+
+  return config;
 }
 
 function cleanConversation(messages) {
@@ -94,8 +111,8 @@ app.post('/api/chat', async (req, res) => {
     return res.status(500).json({ error: 'Auf dem Server ist kein ANTHROPIC_API_KEY konfiguriert.' });
   }
 
-  const { scenario, messages } = req.body || {};
-  const scenarioConfig = getScenarioConfig(scenario);
+  const { scenario, messages, details } = req.body || {};
+  const scenarioConfig = getScenarioConfig(scenario, details);
 
   if (!scenarioConfig) {
     return res.status(400).json({ error: 'Unbekanntes Szenario.' });
@@ -133,8 +150,8 @@ app.post('/api/analyze', async (req, res) => {
     return res.status(500).json({ error: 'Auf dem Server ist kein ANTHROPIC_API_KEY konfiguriert.' });
   }
 
-  const { scenario, messages } = req.body || {};
-  const scenarioConfig = getScenarioConfig(scenario);
+  const { scenario, messages, details } = req.body || {};
+  const scenarioConfig = getScenarioConfig(scenario, details);
 
   if (!scenarioConfig) {
     return res.status(400).json({ error: 'Unbekanntes Szenario.' });
