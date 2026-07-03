@@ -37,7 +37,26 @@
     <section id="detail" class="detail-panel hidden">
       <button id="backButton" class="back-button">← Zurück zur Auswahl</button>
       <h2 id="detailTitle"></h2>
-      <p id="detailText"></p>
+
+      <div id="chatLog" class="chat-log" aria-live="polite"></div>
+      <p id="statusText" class="status-text"></p>
+
+      <form id="chatForm" class="chat-form">
+        <button type="button" id="micButton" class="mic-button" title="Per Mikrofon antworten">🎤</button>
+        <input
+          type="text"
+          id="chatInput"
+          class="chat-input"
+          placeholder="Antwort eintippen oder Mikrofon nutzen…"
+          autocomplete="off"
+        >
+        <button type="submit" id="sendButton" class="send-button">Senden</button>
+      </form>
+
+      <label class="speak-toggle">
+        <input type="checkbox" id="speakToggle" checked>
+        Antworten der KI vorlesen
+      </label>
     </section>
   </main>
 
