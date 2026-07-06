@@ -56,9 +56,15 @@
       <p id="convStatus" class="conv-status">Verbinde …</p>
       <p class="timer">Gesprächsdauer: <span id="timerDisplay">0:00</span> <span class="timer-hint">(mind. 5:00 erforderlich)</span></p>
 
+      <p id="livePreview" class="live-preview hidden"></p>
+
       <div class="conv-controls">
-        <button type="button" id="micButton" class="mic-button" title="Sprechen">🎤 Sprechen</button>
-        <button type="button" id="endButton" class="btn-gold" disabled>Gespräch beenden &amp; auswerten</button>
+        <button type="button" id="micButton" class="mic-button" title="Aufnahme starten/stoppen">🎤 Aufnahme starten</button>
+        <button type="button" id="sendButton" class="btn-gold" disabled>Senden</button>
+      </div>
+
+      <div class="conv-controls conv-controls-secondary">
+        <button type="button" id="endButton" class="btn-gold-outline" disabled>Gespräch beenden &amp; auswerten</button>
       </div>
 
       <label class="transcript-toggle">

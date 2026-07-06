@@ -11,9 +11,11 @@ const waveformBars = Array.from(document.querySelectorAll('#waveform span'));
 const convStatus = document.getElementById('convStatus');
 const timerDisplay = document.getElementById('timerDisplay');
 const micButton = document.getElementById('micButton');
+const sendButton = document.getElementById('sendButton');
 const endButton = document.getElementById('endButton');
 const transcriptToggle = document.getElementById('transcriptToggle');
 const chatLog = document.getElementById('chatLog');
+const livePreview = document.getElementById('livePreview');
 
 const overallScoreCircle = document.getElementById('overallScoreCircle');
 const overallScoreCategory = document.getElementById('overallScoreCategory');
@@ -33,8 +35,11 @@ let conversation = []; // { role: 'user' | 'assistant', content: string }
 let elapsedSeconds = 0;
 let timerInterval = null;
 let isLoading = false;
-let isRecording = false;
+let isRecording = false; // Aufnahme läuft aktuell technisch (SpeechRecognition aktiv)
+let recordingRequested = false; // Nutzer möchte weiter aufnehmen (steuert Auto-Neustart)
 let isSpeaking = false;
+let finalTranscript = '';
+let interimTranscript = '';
 
 let audioContext = null;
 let analyserNode = null;
@@ -199,6 +204,7 @@ function speak(text) {
 async function requestAiReply() {
   isLoading = true;
   micButton.disabled = true;
+  sendButton.disabled = true;
   convStatus.textContent = 'D+J SprachCoach denkt nach …';
 
   try {
@@ -228,54 +234,125 @@ async function requestAiReply() {
 }
 
 // --- Spracheingabe (Mikrofon) ---
+// Aufnahme läuft durchgehend weiter (auch über kurze Sprechpausen hinweg), bis
+// die Person aktiv auf "Senden" klickt. Erst dann gilt der eigene Redebeitrag als beendet.
 const SpeechRecognitionImpl = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null;
+
+function updateLivePreview() {
+  const hasText = finalTranscript.trim() || interimTranscript.trim();
+  livePreview.classList.toggle('hidden', !hasText);
+  livePreview.innerHTML = '';
+  if (finalTranscript.trim()) {
+    livePreview.appendChild(document.createTextNode(finalTranscript.trim() + ' '));
+  }
+  if (interimTranscript.trim()) {
+    const span = document.createElement('span');
+    span.className = 'interim';
+    span.textContent = interimTranscript.trim();
+    livePreview.appendChild(span);
+  }
+  sendButton.disabled = !hasText;
+}
+
+function resetTranscriptBuffer() {
+  finalTranscript = '';
+  interimTranscript = '';
+  updateLivePreview();
+}
 
 if (SpeechRecognitionImpl) {
   recognition = new SpeechRecognitionImpl();
   recognition.lang = 'de-DE';
-  recognition.interimResults = false;
+  recognition.continuous = true;
+  recognition.interimResults = true;
   recognition.maxAlternatives = 1;
 
   recognition.addEventListener('result', (event) => {
-    const transcript = event.results[0][0].transcript;
-    if (!transcript) return;
-    conversation.push({ role: 'user', content: transcript });
-    addBubble('user', transcript);
-    requestAiReply();
+    let interim = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const result = event.results[i];
+      if (result.isFinal) {
+        finalTranscript += (finalTranscript ? ' ' : '') + result[0].transcript.trim();
+      } else {
+        interim += result[0].transcript;
+      }
+    }
+    interimTranscript = interim;
+    updateLivePreview();
   });
 
   recognition.addEventListener('end', () => {
     isRecording = false;
-    micButton.classList.remove('recording');
-    micButton.textContent = '🎤 Sprechen';
+    if (recordingRequested) {
+      // Manche Browser beenden die Erkennung nach kurzer Stille automatisch,
+      // obwohl die Person weiter aufnehmen möchte – dann nahtlos neu starten.
+      try {
+        recognition.start();
+        isRecording = true;
+      } catch (err) {
+        recordingRequested = false;
+        micButton.classList.remove('recording');
+        micButton.textContent = '🎤 Aufnahme starten';
+      }
+    } else {
+      micButton.classList.remove('recording');
+      micButton.textContent = '🎤 Aufnahme starten';
+    }
   });
 
-  recognition.addEventListener('error', () => {
+  recognition.addEventListener('error', (event) => {
+    if (event.error === 'no-speech' || event.error === 'aborted') return;
     isRecording = false;
+    recordingRequested = false;
     micButton.classList.remove('recording');
-    micButton.textContent = '🎤 Sprechen';
+    micButton.textContent = '🎤 Aufnahme starten';
     convStatus.textContent = 'Spracherkennung war nicht erfolgreich. Bitte versuche es erneut.';
   });
 
   micButton.addEventListener('click', () => {
     if (isLoading || isSpeaking) return;
 
-    if (isRecording) {
+    if (recordingRequested) {
+      recordingRequested = false;
       recognition.stop();
+      micButton.classList.remove('recording');
+      micButton.textContent = '🎤 Aufnahme fortsetzen';
+      convStatus.textContent = 'Aufnahme pausiert. Klicke „Senden“, wenn du fertig bist.';
       return;
     }
 
-    isRecording = true;
+    recordingRequested = true;
     micButton.classList.add('recording');
-    micButton.textContent = '⏺ Höre zu …';
+    micButton.textContent = '⏺ Aufnahme läuft – klicken zum Pausieren';
     convStatus.textContent = 'Ich höre zu …';
     recognition.start();
+    isRecording = true;
   });
 } else {
   micButton.disabled = true;
   micButton.title = 'Spracherkennung wird von diesem Browser nicht unterstützt.';
 }
+
+sendButton.addEventListener('click', () => {
+  if (sendButton.disabled) return;
+
+  const text = (finalTranscript + ' ' + interimTranscript).trim();
+  if (!text) return;
+
+  if (recordingRequested) {
+    recordingRequested = false;
+    recognition && recognition.stop();
+    micButton.classList.remove('recording');
+    micButton.textContent = '🎤 Aufnahme starten';
+  }
+
+  conversation.push({ role: 'user', content: text });
+  addBubble('user', text);
+  resetTranscriptBuffer();
+
+  requestAiReply();
+});
 
 transcriptToggle.addEventListener('change', () => {
   chatLog.classList.toggle('hidden', !transcriptToggle.checked);
@@ -287,6 +364,8 @@ endButton.addEventListener('click', async () => {
 
   endButton.disabled = true;
   micButton.disabled = true;
+  sendButton.disabled = true;
+  recordingRequested = false;
   window.speechSynthesis && window.speechSynthesis.cancel();
   if (recognition && isRecording) recognition.stop();
 
@@ -455,7 +534,11 @@ newConversationButton.addEventListener('click', () => {
   conversation = [];
   elapsedSeconds = 0;
   endButton.disabled = true;
-  micButton.textContent = '🎤 Sprechen';
+  recordingRequested = false;
+  resetTranscriptBuffer();
+  micButton.classList.remove('recording');
+  micButton.textContent = '🎤 Aufnahme starten';
+  micButton.disabled = !SpeechRecognitionImpl;
   chatLog.innerHTML = '';
   transcriptToggle.checked = false;
   chatLog.classList.add('hidden');
