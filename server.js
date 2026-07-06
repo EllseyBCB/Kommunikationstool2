@@ -8,15 +8,13 @@ const prompts = require('./server/prompts');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const MODEL = 'claude-sonnet-5';
-const MAX_HISTORY_MESSAGES = 40;
-const MAX_DETAIL_FIELD_LENGTH = 4000;
-const SCENARIO_KEYS = ['bewerbung', 'sales', 'gehalt'];
+const MAX_HISTORY_MESSAGES = 60;
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const ANALYSIS_TOOL = {
-  name: 'liefere_auswertung',
-  description: 'Liefert eine strukturierte Auswertung der Kommunikation der übenden Person.',
+  name: 'liefere_sprachanalyse',
+  description: 'Liefert die strukturierte D+J-Sprachanalyse der übenden Person.',
   input_schema: {
     type: 'object',
     properties: {
@@ -24,46 +22,57 @@ const ANALYSIS_TOOL = {
         type: 'integer',
         minimum: 0,
         maximum: 100,
-        description: 'Gesamtscore von 0 bis 100 für die Kommunikation der übenden Person.'
+        description: 'Gesamtscore von 0 bis 100 für die gesamte Kommunikation der Person.'
       },
-      bereiche: {
+      dimensionen: {
         type: 'array',
-        minItems: 5,
-        maxItems: 5,
-        description: 'Genau ein Eintrag pro Bewertungsbereich, in der vorgegebenen Reihenfolge.',
+        minItems: prompts.DIMENSIONS.length,
+        maxItems: prompts.DIMENSIONS.length,
+        description: 'Genau ein Eintrag pro Dimension, in der vorgegebenen Reihenfolge.',
         items: {
           type: 'object',
           properties: {
-            name: { type: 'string', enum: prompts.ANALYSIS_AREAS },
-            staerken: {
+            schluessel: { type: 'string', enum: prompts.DIMENSIONS.map((d) => d.key) },
+            score: { type: 'integer', minimum: 0, maximum: 100 },
+            staerken: { type: 'array', items: { type: 'string' }, minItems: 1, maxItems: 3 },
+            entwicklungsfelder: { type: 'array', items: { type: 'string' }, minItems: 1, maxItems: 3 },
+            tipps: {
               type: 'array',
-              items: { type: 'string' },
               minItems: 1,
-              maxItems: 3
-            },
-            verbesserungen: {
-              type: 'array',
-              items: { type: 'string' },
-              minItems: 1,
-              maxItems: 3
+              maxItems: 2,
+              items: {
+                type: 'object',
+                properties: {
+                  tipp: { type: 'string' },
+                  uebung: { type: 'string' }
+                },
+                required: ['tipp', 'uebung']
+              }
             }
           },
-          required: ['name', 'staerken', 'verbesserungen']
+          required: ['schluessel', 'score', 'staerken', 'entwicklungsfelder', 'tipps']
         }
       },
-      umformulierungen: {
+      top_staerken: {
         type: 'array',
-        minItems: 2,
+        minItems: 3,
         maxItems: 3,
+        items: { type: 'string' }
+      },
+      prioritaere_entwicklungsfelder: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 2,
         items: {
           type: 'object',
           properties: {
-            original: { type: 'string', description: 'Originale Formulierung der übenden Person.' },
-            verbesserung: { type: 'string', description: 'Verbesserte Umformulierung.' }
+            feld: { type: 'string' },
+            massnahme: { type: 'string' }
           },
-          required: ['original', 'verbesserung']
+          required: ['feld', 'massnahme']
         }
       },
+      zusammenfassung: { type: 'string' },
       naechste_schritte: {
         type: 'array',
         minItems: 3,
@@ -71,32 +80,12 @@ const ANALYSIS_TOOL = {
         items: { type: 'string' }
       }
     },
-    required: ['gesamtscore', 'bereiche', 'umformulierungen', 'naechste_schritte']
+    required: ['gesamtscore', 'dimensionen', 'top_staerken', 'prioritaere_entwicklungsfelder', 'zusammenfassung', 'naechste_schritte']
   }
 };
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-
-function trimField(value) {
-  return typeof value === 'string' ? value.trim().slice(0, MAX_DETAIL_FIELD_LENGTH) : '';
-}
-
-function getScenarioConfig(scenario, details) {
-  if (!SCENARIO_KEYS.includes(scenario)) return null;
-
-  const config = prompts[scenario];
-
-  if (typeof config.buildSystem === 'function') {
-    const cleanDetails = {
-      jobTitle: trimField(details && details.jobTitle),
-      jobInfo: trimField(details && details.jobInfo)
-    };
-    return { title: config.title, system: config.buildSystem(cleanDetails) };
-  }
-
-  return config;
-}
 
 function cleanConversation(messages) {
   const history = Array.isArray(messages) ? messages : [];
@@ -111,24 +100,19 @@ app.post('/api/chat', async (req, res) => {
     return res.status(500).json({ error: 'Auf dem Server ist kein ANTHROPIC_API_KEY konfiguriert.' });
   }
 
-  const { scenario, messages, details } = req.body || {};
-  const scenarioConfig = getScenarioConfig(scenario, details);
-
-  if (!scenarioConfig) {
-    return res.status(400).json({ error: 'Unbekanntes Szenario.' });
-  }
-
+  const { messages, elapsedSeconds } = req.body || {};
   const cleanHistory = cleanConversation(messages);
+  const safeElapsed = Number.isFinite(elapsedSeconds) ? Math.max(0, elapsedSeconds) : 0;
 
   const apiMessages = cleanHistory.length > 0
     ? cleanHistory
-    : [{ role: 'user', content: 'Bitte beginne das Rollenspiel mit deiner ersten Begrüßung bzw. Frage.' }];
+    : [{ role: 'user', content: 'Bitte begrüße mich und beginne das Gespräch.' }];
 
   try {
     const response = await anthropic.messages.create({
       model: MODEL,
       max_tokens: 400,
-      system: scenarioConfig.system,
+      system: prompts.buildConversationSystemPrompt(safeElapsed),
       messages: apiMessages
     });
 
@@ -150,13 +134,7 @@ app.post('/api/analyze', async (req, res) => {
     return res.status(500).json({ error: 'Auf dem Server ist kein ANTHROPIC_API_KEY konfiguriert.' });
   }
 
-  const { scenario, messages, details } = req.body || {};
-  const scenarioConfig = getScenarioConfig(scenario, details);
-
-  if (!scenarioConfig) {
-    return res.status(400).json({ error: 'Unbekanntes Szenario.' });
-  }
-
+  const { messages } = req.body || {};
   const cleanHistory = cleanConversation(messages);
   const userTurns = cleanHistory.filter((m) => m.role === 'user');
 
@@ -165,20 +143,20 @@ app.post('/api/analyze', async (req, res) => {
   }
 
   const transcript = cleanHistory
-    .map((m) => `${m.role === 'user' ? 'Übende Person' : 'Gesprächspartner (Rolle)'}: ${m.content}`)
+    .map((m) => `${m.role === 'user' ? 'Übende Person' : 'D+J SprachCoach'}: ${m.content}`)
     .join('\n\n');
 
   try {
     const response = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 1500,
-      system: prompts.buildAnalysisSystemPrompt(scenarioConfig.title),
+      max_tokens: 3000,
+      system: prompts.buildAnalysisSystemPrompt(),
       tools: [ANALYSIS_TOOL],
       tool_choice: { type: 'tool', name: ANALYSIS_TOOL.name },
       messages: [
         {
           role: 'user',
-          content: `Hier ist der vollständige Gesprächsverlauf:\n\n${transcript}\n\nBitte werte ausschließlich die Kommunikation der „Übenden Person" aus.`
+          content: `Hier ist das vollständige Gesprächstranskript:\n\n${transcript}\n\nBitte erstelle die strukturierte Sprachanalyse ausschließlich für die „Übende Person".`
         }
       ]
     });
@@ -189,13 +167,13 @@ app.post('/api/analyze', async (req, res) => {
       throw new Error('Keine strukturierte Auswertung erhalten.');
     }
 
-    res.json(toolUse.input);
+    res.json({ dimensionMeta: prompts.DIMENSIONS, ...toolUse.input });
   } catch (err) {
     console.error('Fehler beim Aufruf der Anthropic-API:', err);
-    res.status(502).json({ error: 'Die Auswertung konnte gerade nicht erstellt werden. Bitte versuche es erneut.' });
+    res.status(502).json({ error: 'Die Analyse konnte gerade nicht erstellt werden. Bitte versuche es erneut.' });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Kommunikationstool läuft auf http://localhost:${PORT}`);
+  console.log(`D+J SprachCoach läuft auf http://localhost:${PORT}`);
 });

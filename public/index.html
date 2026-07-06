@@ -3,112 +3,113 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kommunikationstool – Gespräche üben</title>
+  <title>D+J Consult – Professionelle Sprachanalyse</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="header">
-    <h1>Kommunikationstool</h1>
-    <p class="subtitle">Übe wichtige Gespräche in einer sicheren Umgebung</p>
-  </header>
+  <div class="page">
 
-  <main class="container">
-    <h2 class="section-title">Wähle ein Szenario</h2>
-    <div class="scenario-grid">
-      <button class="scenario-card" data-scenario="bewerbung">
-        <span class="scenario-icon">💼</span>
-        <span class="scenario-name">Bewerbungsgespräch</span>
-        <span class="scenario-desc">Bereite dich auf typische Fragen im Vorstellungsgespräch vor.</span>
-      </button>
+    <!-- ============ STARTSEITE ============ -->
+    <section id="home" class="panel">
+      <svg class="logo" viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="D+J Consult Logo">
+        <g transform="translate(50, 50)">
+          <path d="M 20 20 Q 80 10, 140 20 L 140 180 Q 80 170, 20 180 Z" fill="none" stroke="#c9a961" stroke-width="8"/>
+          <path d="M 180 20 Q 120 10, 60 20 L 60 180 Q 120 170, 180 180 Z" fill="none" stroke="#c9a961" stroke-width="8"/>
+          <line x1="100" y1="20" x2="100" y2="180" stroke="#c9a961" stroke-width="6"/>
+        </g>
+        <text x="280" y="140" font-family="Arial, sans-serif" font-size="72" font-weight="300" fill="#2a2a2a">D+J</text>
+        <text x="480" y="140" font-family="Arial, sans-serif" font-size="72" font-weight="300" fill="#2a2a2a">Consult</text>
+        <text x="280" y="190" font-family="Arial, sans-serif" font-size="28" font-weight="300" letter-spacing="8" fill="#2a2a2a">ZIELE ERREICHEN</text>
+      </svg>
 
-      <button class="scenario-card" data-scenario="sales">
-        <span class="scenario-icon">📈</span>
-        <span class="scenario-name">Sales-Pitch</span>
-        <span class="scenario-desc">Übe, ein Produkt oder eine Idee überzeugend vorzustellen.</span>
-      </button>
+      <h1>Professionelle Sprachanalyse</h1>
+      <p class="subtitle">Entdecken Sie Ihr volles sprachliches Potenzial</p>
 
-      <button class="scenario-card" data-scenario="gehalt">
-        <span class="scenario-icon">💰</span>
-        <span class="scenario-name">Gehaltsverhandlung</span>
-        <span class="scenario-desc">Trainiere, selbstbewusst über dein Gehalt zu verhandeln.</span>
-      </button>
-    </div>
-
-    <section id="jobSetup" class="detail-panel hidden">
-      <button id="jobSetupBackButton" class="back-button">← Zurück zur Auswahl</button>
-      <h2>Bewerbungsgespräch vorbereiten</h2>
-      <p class="setup-intro">Du bewirbst dich bei <strong>Alpha Blueprint</strong>. Wähle die Stelle, für die du das Gespräch üben möchtest.</p>
-
-      <form id="jobSetupForm" class="job-setup-form">
-        <label class="field-label" for="jobTitleSelect">Position</label>
-        <select id="jobTitleSelect" class="field-select">
-          <option value="Sales Manager (m/w/d)">Sales Manager (m/w/d)</option>
-          <option value="Softwareentwickler:in">Softwareentwickler:in</option>
-          <option value="Marketing-Referent:in">Marketing-Referent:in</option>
-          <option value="Kundenservice-Mitarbeiter:in">Kundenservice-Mitarbeiter:in</option>
-          <option value="Projektmanager:in">Projektmanager:in</option>
-          <option value="__custom__">Andere Position …</option>
-        </select>
-
-        <input
-          type="text"
-          id="jobTitleCustom"
-          class="field-input hidden"
-          placeholder="Bezeichnung der Position eingeben"
-        >
-
-        <label class="field-label" for="jobInfo">Infos zur Stelle (optional)</label>
-        <textarea
-          id="jobInfo"
-          class="field-textarea"
-          rows="6"
-          placeholder="Füge hier z. B. Stellenbeschreibung, Anforderungen oder Besonderheiten der Position ein…"
-        ></textarea>
-
-        <button type="submit" class="start-button">Gespräch starten</button>
-      </form>
-    </section>
-
-    <section id="detail" class="detail-panel hidden">
-      <button id="backButton" class="back-button">← Zurück zur Auswahl</button>
-      <h2 id="detailTitle"></h2>
-
-      <div id="chatLog" class="chat-log" aria-live="polite"></div>
-      <p id="statusText" class="status-text"></p>
-
-      <form id="chatForm" class="chat-form">
-        <button type="button" id="micButton" class="mic-button" title="Per Mikrofon antworten">🎤</button>
-        <input
-          type="text"
-          id="chatInput"
-          class="chat-input"
-          placeholder="Antwort eintippen oder Mikrofon nutzen…"
-          autocomplete="off"
-        >
-        <button type="submit" id="sendButton" class="send-button">Senden</button>
-      </form>
-
-      <div class="detail-footer-row">
-        <label class="speak-toggle">
-          <input type="checkbox" id="speakToggle" checked>
-          Antworten der KI vorlesen
-        </label>
-
-        <button type="button" id="analyzeButton" class="analyze-button" disabled>
-          Gespräch auswerten
-        </button>
+      <div class="highlight-box">
+        <p><strong>So funktioniert es:</strong></p>
+        <p>Sie führen ein natürliches, mindestens 5-minütiges Gespräch mit „D+J SprachCoach", Ihrem virtuellen Gesprächspartner. Im Anschluss erhalten Sie eine ausführliche Analyse Ihrer Sprachkompetenz in sieben Dimensionen – mit konkreten Stärken, Entwicklungsfeldern und Übungen.</p>
       </div>
 
-      <section id="analysisPanel" class="analysis-panel hidden">
-        <h3>Auswertung deines Gesprächs</h3>
-        <div id="analysisContent"></div>
-      </section>
-    </section>
-  </main>
+      <p class="mic-notice">🎙️ Für das Gespräch benötigt diese Anwendung Zugriff auf Ihr Mikrofon. Ihr Browser wird Sie gleich um Erlaubnis bitten.</p>
 
-  <footer class="footer">
-    <p>Kommunikationstool &middot; Einfach üben, sicher wachsen</p>
-  </footer>
+      <div class="privacy-notice">
+        <p><strong>Datenschutzhinweis:</strong> Diese Sprachanalyse dient ausschließlich der Verbesserung Ihrer kommunikativen Fähigkeiten. Ihre Daten werden nur für die Analyse dieses Gesprächs verwendet, nicht an Dritte weitergegeben und nach Abschluss der Sitzung nicht dauerhaft gespeichert.</p>
+        <label class="consent-label">
+          <input type="checkbox" id="consentCheckbox">
+          Mit dem Start des Gesprächs stimme ich der Aufzeichnung und Analyse zu.
+        </label>
+      </div>
+
+      <button id="startButton" class="btn-gold" disabled>Gespräch starten</button>
+      <p id="homeStatus" class="status-text"></p>
+    </section>
+
+    <!-- ============ GESPRÄCHSANSICHT ============ -->
+    <section id="conversation" class="panel hidden">
+      <div class="avatar-wrap">
+        <div class="avatar">DJ</div>
+        <div id="waveform" class="waveform">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <p id="convStatus" class="conv-status">Verbinde …</p>
+      <p class="timer">Gesprächsdauer: <span id="timerDisplay">0:00</span> <span class="timer-hint">(mind. 5:00 erforderlich)</span></p>
+
+      <div class="conv-controls">
+        <button type="button" id="micButton" class="mic-button" title="Sprechen">🎤 Sprechen</button>
+        <button type="button" id="endButton" class="btn-gold" disabled>Gespräch beenden &amp; auswerten</button>
+      </div>
+
+      <label class="transcript-toggle">
+        <input type="checkbox" id="transcriptToggle">
+        Live-Transkription anzeigen
+      </label>
+
+      <div id="chatLog" class="chat-log hidden" aria-live="polite"></div>
+    </section>
+
+    <!-- ============ ANALYSE-ERGEBNISSEITE ============ -->
+    <section id="analysis" class="panel hidden">
+      <div class="analysis-header">
+        <h1>D+J CONSULT SPRACHANALYSE</h1>
+        <p class="subtitle">Ihr persönliches Ergebnis</p>
+      </div>
+
+      <div class="score-hero">
+        <div id="overallScoreCircle" class="overall-score-circle">--</div>
+        <div>
+          <div id="overallScoreCategory" class="overall-score-category"></div>
+          <div class="overall-score-label">von 100 Punkten</div>
+        </div>
+      </div>
+
+      <h2 class="section-title">Dimensionsanalyse im Überblick</h2>
+      <div id="dimensionOverview" class="dimension-overview"></div>
+
+      <h2 class="section-title">Detailanalyse pro Dimension</h2>
+      <div id="dimensionDetails" class="dimension-details"></div>
+
+      <h2 class="section-title">🏆 Top 3 Stärken</h2>
+      <ol id="topStrengths" class="top-list"></ol>
+
+      <h2 class="section-title">📍 Priorität Entwicklungsfelder</h2>
+      <div id="priorityAreas" class="priority-areas"></div>
+
+      <h2 class="section-title">Zusammenfassung und Empfehlung</h2>
+      <p id="summaryText" class="summary-text"></p>
+      <p class="next-steps-label">Nächste Schritte:</p>
+      <ul id="nextStepsList" class="next-steps"></ul>
+
+      <div class="analysis-actions">
+        <button id="exportPdfButton" class="btn-gold-outline">Als PDF exportieren</button>
+        <button id="newConversationButton" class="btn-gold">Neues Gespräch</button>
+      </div>
+
+      <p class="brand-footer">D+J Consult · ZIELE ERREICHEN<br>www.djconsult.de · info@djconsult.de</p>
+    </section>
+
+  </div>
 
   <script src="app.js"></script>
 </body>
