@@ -27,6 +27,7 @@ const summaryText = document.getElementById('summaryText');
 const nextStepsList = document.getElementById('nextStepsList');
 const exportPdfButton = document.getElementById('exportPdfButton');
 const newConversationButton = document.getElementById('newConversationButton');
+const retryAnalysisButton = document.getElementById('retryAnalysisButton');
 
 const MIN_CONVERSATION_SECONDS = 300;
 
@@ -359,23 +360,8 @@ transcriptToggle.addEventListener('change', () => {
 });
 
 // --- Gespräch beenden & Analyse ---
-endButton.addEventListener('click', async () => {
-  if (endButton.disabled) return;
-
-  endButton.disabled = true;
-  micButton.disabled = true;
-  sendButton.disabled = true;
-  recordingRequested = false;
-  window.speechSynthesis && window.speechSynthesis.cancel();
-  if (recognition && isRecording) recognition.stop();
-
-  stopTimer();
-  stopWaveformLoop();
-
-  conversationSection.classList.add('hidden');
-  analysisSection.classList.remove('hidden');
-  analysisSection.scrollIntoView({ behavior: 'smooth' });
-
+async function runAnalysis() {
+  retryAnalysisButton.classList.add('hidden');
   overallScoreCircle.textContent = '…';
   overallScoreCategory.textContent = 'Die Analyse wird erstellt …';
   dimensionOverview.innerHTML = '';
@@ -401,8 +387,32 @@ endButton.addEventListener('click', async () => {
     renderAnalysis(data);
   } catch (err) {
     console.error(err);
+    overallScoreCircle.textContent = '–';
     overallScoreCategory.textContent = err.message || 'Es ist ein Fehler bei der Analyse aufgetreten.';
+    retryAnalysisButton.classList.remove('hidden');
   }
+}
+
+retryAnalysisButton.addEventListener('click', runAnalysis);
+
+endButton.addEventListener('click', () => {
+  if (endButton.disabled) return;
+
+  endButton.disabled = true;
+  micButton.disabled = true;
+  sendButton.disabled = true;
+  recordingRequested = false;
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  if (recognition && isRecording) recognition.stop();
+
+  stopTimer();
+  stopWaveformLoop();
+
+  conversationSection.classList.add('hidden');
+  analysisSection.classList.remove('hidden');
+  analysisSection.scrollIntoView({ behavior: 'smooth' });
+
+  runAnalysis();
 });
 
 function renderAnalysis(data) {
@@ -545,6 +555,7 @@ newConversationButton.addEventListener('click', () => {
   consentCheckbox.checked = false;
   startButton.disabled = true;
   homeStatus.textContent = '';
+  retryAnalysisButton.classList.add('hidden');
 
   analysisSection.classList.add('hidden');
   homeSection.classList.remove('hidden');

@@ -149,7 +149,7 @@ app.post('/api/analyze', async (req, res) => {
   try {
     const response = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 3000,
+      max_tokens: 8000,
       system: prompts.buildAnalysisSystemPrompt(),
       tools: [ANALYSIS_TOOL],
       tool_choice: { type: 'tool', name: ANALYSIS_TOOL.name },
@@ -161,16 +161,32 @@ app.post('/api/analyze', async (req, res) => {
       ]
     });
 
+    if (response.stop_reason === 'max_tokens') {
+      throw new Error('Die Antwort der KI wurde abgeschnitten (zu lang für das Token-Limit).');
+    }
+
     const toolUse = response.content.find((block) => block.type === 'tool_use' && block.name === ANALYSIS_TOOL.name);
 
     if (!toolUse) {
       throw new Error('Keine strukturierte Auswertung erhalten.');
     }
 
-    res.json({ dimensionMeta: prompts.DIMENSIONS, ...toolUse.input });
+    const result = toolUse.input;
+    const hasValidShape = result
+      && typeof result.gesamtscore === 'number'
+      && Array.isArray(result.dimensionen)
+      && result.dimensionen.length === prompts.DIMENSIONS.length
+      && Array.isArray(result.top_staerken)
+      && Array.isArray(result.naechste_schritte);
+
+    if (!hasValidShape) {
+      throw new Error('Die Auswertung war unvollständig.');
+    }
+
+    res.json({ dimensionMeta: prompts.DIMENSIONS, ...result });
   } catch (err) {
     console.error('Fehler beim Aufruf der Anthropic-API:', err);
-    res.status(502).json({ error: 'Die Analyse konnte gerade nicht erstellt werden. Bitte versuche es erneut.' });
+    res.status(502).json({ error: 'Die Analyse konnte gerade nicht vollständig erstellt werden. Bitte versuche es erneut.' });
   }
 });
 
