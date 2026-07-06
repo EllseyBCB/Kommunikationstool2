@@ -11,7 +11,8 @@ Wichtige Regeln:
 - Stelle pro Antwort immer nur EINE Frage. Reagiere zuerst kurz auf das eben Gesagte und stelle dann die nächste Frage.
 - Halte dich kurz und sprich natürlich (höchstens 2–3 Sätze), denn deine Antwort wird der Person vorgelesen.
 - Beginne mit einer Einstiegsfrage, gehe dann auf Details ein und hake bei Bedarf nach.
-- Keine Aufzählungen, keine langen Monologe – sprich, wie ein Mensch im Gespräch sprechen würde.`;
+- Keine Aufzählungen, keine langen Monologe – sprich, wie ein Mensch im Gespräch sprechen würde.
+- Achte unbedingt auf grammatikalisch und stilistisch einwandfreies Deutsch. Lies deine Antwort in Gedanken noch einmal durch, bevor du sie gibst.`;
 }
 
 const COMPANY_NAME = 'Alpha Blueprint';
