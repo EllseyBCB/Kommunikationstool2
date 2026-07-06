@@ -171,7 +171,7 @@ function addBubble(role, text) {
   chatLog.scrollTop = chatLog.scrollHeight;
 }
 
-function speak(text) {
+function speakWithBrowserVoice(text) {
   return new Promise((resolve) => {
     if (!('speechSynthesis' in window)) {
       resolve();
@@ -186,20 +186,58 @@ function speak(text) {
     const germanVoice = voices.find((v) => v.lang && v.lang.startsWith('de'));
     if (germanVoice) utterance.voice = germanVoice;
 
-    isSpeaking = true;
-    convStatus.textContent = 'Ich spreche …';
-
-    utterance.onend = () => {
-      isSpeaking = false;
-      resolve();
-    };
-    utterance.onerror = () => {
-      isSpeaking = false;
-      resolve();
-    };
+    utterance.onend = resolve;
+    utterance.onerror = resolve;
 
     window.speechSynthesis.speak(utterance);
   });
+}
+
+let currentAudio = null;
+
+function speakWithElevenLabs(text) {
+  return new Promise((resolve, reject) => {
+    fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error || 'ElevenLabs-Sprachausgabe fehlgeschlagen.');
+        }
+        return response.blob();
+      })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        currentAudio = new Audio(url);
+        currentAudio.onended = () => {
+          URL.revokeObjectURL(url);
+          resolve();
+        };
+        currentAudio.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error('Wiedergabe der ElevenLabs-Stimme fehlgeschlagen.'));
+        };
+        currentAudio.play().catch(reject);
+      })
+      .catch(reject);
+  });
+}
+
+async function speak(text) {
+  isSpeaking = true;
+  convStatus.textContent = 'Ich spreche …';
+
+  try {
+    await speakWithElevenLabs(text);
+  } catch (err) {
+    console.warn('ElevenLabs nicht verfügbar, nutze Browser-Stimme als Fallback:', err.message);
+    await speakWithBrowserVoice(text);
+  } finally {
+    isSpeaking = false;
+  }
 }
 
 async function requestAiReply() {
@@ -403,6 +441,7 @@ endButton.addEventListener('click', () => {
   sendButton.disabled = true;
   recordingRequested = false;
   window.speechSynthesis && window.speechSynthesis.cancel();
+  if (currentAudio) currentAudio.pause();
   if (recognition && isRecording) recognition.stop();
 
   stopTimer();

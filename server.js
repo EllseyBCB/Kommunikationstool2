@@ -12,6 +12,9 @@ const MAX_HISTORY_MESSAGES = 60;
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+const MAX_TTS_TEXT_LENGTH = 2000;
+const ELEVENLABS_MODEL_ID = 'eleven_multilingual_v2';
+
 const ANALYSIS_TOOL = {
   name: 'liefere_sprachanalyse',
   description: 'Liefert die strukturierte D+J-Sprachanalyse der übenden Person.',
@@ -187,6 +190,54 @@ app.post('/api/analyze', async (req, res) => {
   } catch (err) {
     console.error('Fehler beim Aufruf der Anthropic-API:', err);
     res.status(502).json({ error: 'Die Analyse konnte gerade nicht vollständig erstellt werden. Bitte versuche es erneut.' });
+  }
+});
+
+app.post('/api/tts', async (req, res) => {
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  const voiceId = process.env.ELEVENLABS_VOICE_ID;
+
+  if (!apiKey || !voiceId) {
+    return res.status(500).json({ error: 'ElevenLabs ist auf dem Server nicht konfiguriert.' });
+  }
+
+  const { text } = req.body || {};
+  const cleanText = typeof text === 'string' ? text.trim().slice(0, MAX_TTS_TEXT_LENGTH) : '';
+
+  if (!cleanText) {
+    return res.status(400).json({ error: 'Kein Text zum Vorlesen übergeben.' });
+  }
+
+  try {
+    const elevenResponse = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'xi-api-key': apiKey,
+          Accept: 'audio/mpeg'
+        },
+        body: JSON.stringify({
+          text: cleanText,
+          model_id: ELEVENLABS_MODEL_ID,
+          voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+        })
+      }
+    );
+
+    if (!elevenResponse.ok) {
+      const errText = await elevenResponse.text();
+      console.error('ElevenLabs-Fehler:', elevenResponse.status, errText);
+      return res.status(502).json({ error: 'Die Sprachausgabe konnte nicht erstellt werden.' });
+    }
+
+    const audioBuffer = Buffer.from(await elevenResponse.arrayBuffer());
+    res.set('Content-Type', 'audio/mpeg');
+    res.send(audioBuffer);
+  } catch (err) {
+    console.error('Fehler beim Aufruf von ElevenLabs:', err);
+    res.status(502).json({ error: 'Die Sprachausgabe konnte nicht erstellt werden.' });
   }
 });
 
